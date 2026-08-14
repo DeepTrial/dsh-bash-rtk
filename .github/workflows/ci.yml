@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+
+      # The plugin's devDependencies use `link:` into a local deepseek-harness
+      # checkout (packages/shell/bash-local, vendor/cordis, ...). CI clones that
+      # sibling so the link targets resolve, then builds the harness packages the
+      # plugin needs (their `lib/` must exist for typecheck to find types).
+      - name: Checkout deepseek-harness (sibling)
+        uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          path: deepseek-harness
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.19"
+          cache: pnpm
+          cache-dependency-path: dsh-bash-rtk/pnpm-lock.yaml
+
+      - name: Install harness deps
+        working-directory: deepseek-harness
+        run: pnpm install
+
+      # Build the harness host libraries the plugin links against (their `lib/`
+      # must exist for the plugin's typecheck to resolve types). `build:lib:host`
+      # builds all workspace packages; the plugin links a subset.
+      - name: Build harness host libs
+        working-directory: deepseek-harness
+        run: pnpm build:lib:host
+
+      - name: Install plugin deps
+        run: pnpm install --ignore-scripts
+
+      - name: Typecheck + test + build
+        run: pnpm run check
