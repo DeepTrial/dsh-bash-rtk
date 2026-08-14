@@ -45,8 +45,11 @@ The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --ver
 The plugin is **disabled by default** — installing it does nothing until you opt in.
 
 ```sh
-# add the plugin to your dsh profile (path / tarball / github)
+# 1) from a local checkout
 dsh plugin --profile web add <path-to-this-dir>
+
+# 2) or directly from a GitHub release tarball (no local clone needed)
+dsh plugin --profile web add https://github.com/DeepTrial/dsh-bash-rtk/archive/refs/tags/v0.1.0.tar.gz
 
 # enable it via an optional overlay — add to your profile's cordis.patch.yml:
 #   - id: bash-sandbox

@@ -45,8 +45,11 @@ model → dsh bash 工具 → RtkBashExecutor.resolve()
 插件**默认禁用** —— 安装后不会生效，需手动开启。
 
 ```sh
-# 把插件加入你的 dsh profile（路径 / tarball / github）
+# 1) 从本地 checkout 安装
 dsh plugin --profile web add <path-to-this-dir>
+
+# 2) 或直接用 GitHub release tarball 安装（无需本地 clone）
+dsh plugin --profile web add https://github.com/DeepTrial/dsh-bash-rtk/archive/refs/tags/v0.1.0.tar.gz
 
 # 通过可选 overlay 启用 —— 在你的 profile 的 cordis.patch.yml 中添加：
 #   - id: bash-sandbox
