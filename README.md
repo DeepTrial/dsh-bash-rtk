@@ -1,41 +1,74 @@
-# dsh-bash-rtk
+# @karlx/dsh-bash-rtk
 
-DeepSeek Harness 的 bash 执行器插件：把符合条件的 bash 命令交给 [rtk](https://github.com/rtk-ai/rtk)（Rust Token Killer）执行，压缩工具输出、省 token。
+> Route eligible shell commands through [rtk](https://github.com/rtk-ai/rtk) (Rust Token Killer) inside the DeepSeek Harness (`dsh`) bash executor — compress tool output, save tokens, change nothing else.
 
-- **透明**：继承官方 bash 执行器，只在 `resolve` 边界改写命令字符串。workdir / timeout / env / exit code / 后台任务 / 文件沙箱语义全部不变。
-- **保守**：含管道、`&&`、`;`、重定向、`$( )` 的复杂命令原样执行，不破坏 shell 语义；只有白名单里的简单命令才走 rtk。
-- **安全降级**：`rtk` 不在 PATH 时整个插件退化为恒等透传，命令照常执行。
-- **两个变体**：`RtkBashExecutor`（无沙箱）和 `RtkSandboxBashExecutor`（保留文件隔离，默认）。
+---
 
-## 安装
+## Why
+
+LLM agents burn tokens on verbose tool output (`git log`, `cargo build`, `pytest` trails…). `rtk` already knows how to shrink those for 30–90%. This plugin bolts that filtering onto `dsh`'s bash executor so every eligible command is auto-routed through `rtk` — **with zero semantic change** to what actually runs.
+
+## How it works
+
+```
+model → dsh bash tool → RtkBashExecutor.resolve()
+                              │
+              ┌───────────────┴────────────────┐
+         eligible?                         not eligible
+     (simple + whitelisted)           (complex / unknown)
+              │                                │
+      rtk <subcommand> …              command runs unchanged
+   (rtk compresses output)            (byte-for-byte passthrough)
+```
+
+Three independent guards decide (see [`src/wrap.ts`](src/wrap.ts)):
+
+1. **Complexity** — any shell metacharacter (`| & ; < > \` $`) disqualifies the command. Wrapping those would silently alter what runs, so they pass through untouched.
+2. **Whitelist** — only known dev tools that `rtk` actually implements are eligible (map in `wrap.ts`).
+3. **Availability** — if the `rtk` binary is absent on `PATH`, the transform is the **identity**: the deployment behaves exactly like the stock local executor.
+
+### Versioning note
+
+The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --version` on `PATH` (see `resolveRtk()` in [`src/index.ts`](src/index.ts)). Therefore:
+
+- When **rtk ships a new release**, any user who upgrades `rtk` on their machine automatically gets the new behavior — no plugin update required.
+- The plugin version (this repo) and the rtk version are **independent**; keep them separate. This README states the *minimum* rtk version tested against, not a lockstep number.
+
+> **Requires:** `rtk` ≥ 0.28 on `PATH` (`rtk --version` exits 0). Without it, the plugin is a no-op passthrough.
+
+## Install & enable
+
+The plugin is **disabled by default** — installing it does nothing until you opt in.
 
 ```sh
-dsh plugin --profile web add <path-to-this-dir>   # 或 tarball / github
+# add the plugin to your dsh profile (path / tarball / github)
+dsh plugin --profile web add <path-to-this-dir>
+
+# enable it via an optional overlay — add to your profile's cordis.patch.yml:
+#   - id: bash-sandbox
+#     disabled: true
+#   - id: bash-rtk
+#     disabled: false
+
+dsh web   # restart to apply
 ```
 
-插件默认 **disabled**，装完不生效。
+The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml). It swaps the stock sandbox executor for `RtkSandboxBashExecutor` (file confinement preserved) and leaves the unconfined `RtkBashExecutor` available for `danger-full-access` setups.
 
-## 启用（可选 overlay）
+## Whitelisted commands
 
-在你的 profile 的 `cordis.patch.yml` 里加：
+`git` `gh` `glab` `gt` `cargo` `go` `golangci-lint` `npm` `npx` `pnpm` `docker` `kubectl` `aws` `ruff` `pytest` `mypy` `uv` `dotnet` `jest` `vitest` `prisma` `tsc` `playwright` `curl` `wget` `grep` `rg` `find` `psql` `mvn` `gradlew` `sbt` `pip` `rspec` `rubocop` `rake` `php` `phpunit` `phpstan` `pint` `pest` `next`
 
-```yaml
-- id: bash-sandbox
-  disabled: true
-- id: bash-rtk
-  disabled: false
-```
+Complex commands — pipelines, `&&`/`;`, redirects, `$( )`, env assignments — always run natively regardless of the whitelist.
 
-重启 `dsh web` 生效。要求 `rtk` 二进制在 PATH 上（`rtk --version` 可运行）。
-
-## 白名单命令
-
-git、gh、glab、gt、cargo、go、golangci-lint、npm、npx、pnpm、docker、kubectl、aws、ruff、pytest、mypy、uv、dotnet、jest、vitest、prisma、tsc、playwright、curl、wget、grep、rg、find、psql、mvn、gradlew、sbt、pip、rspec、rubocop、rake、php、phpunit、phpstan、pint、pest、next。
-
-## 开发
+## Development
 
 ```sh
 pnpm install && pnpm run check    # typecheck + test + build
 ```
 
-`devDependencies` 用 `link:` 指向本地 `deepseek-harness` 源码仓（`../deepseek-harness/...`），测试需要 workspace 内的 `@deepseek-ai/dsh-*` 包。
+`devDependencies` use `link:` into a local `deepseek-harness` checkout; tests run inside that workspace (the `@deepseek-ai/dsh-*` packages must resolve).
+
+## License
+
+MIT
