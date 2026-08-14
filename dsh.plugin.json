@@ -1,5 +1,5 @@
 {
-  "id": "@karlx/dsh-bash-rtk",
+  "id": "@deeptrial/dsh-bash-rtk",
   "version": "0.1.0",
   "main": "./lib/index.js",
   "engines": {

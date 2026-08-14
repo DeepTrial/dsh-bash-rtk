@@ -6,7 +6,7 @@
  * A command that is not eligible for wrapping (complex shell, non-whitelisted
  * tool, or a missing `rtk` binary) passes through byte-for-byte.
  *
- * @module @karlx/dsh-bash-rtk
+ * @module @deeptrial/dsh-bash-rtk
  */
 
 import { spawnSync } from 'node:child_process'
