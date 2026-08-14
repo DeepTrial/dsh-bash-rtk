@@ -1,4 +1,4 @@
-# @karlx/dsh-bash-rtk
+# dsh-bash-rtk
 
 > Route eligible shell commands through [rtk](https://github.com/rtk-ai/rtk) (Rust Token Killer) inside the DeepSeek Harness (`dsh`) bash executor — compress tool output, save tokens, change nothing else.
 
@@ -34,7 +34,7 @@ The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --ver
 - When **rtk ships a new release**, any user who upgrades `rtk` on their machine automatically gets the new behavior — no plugin update required.
 - The plugin version (this repo) and the rtk version are **independent**; keep them separate. This README states the *minimum* rtk version tested against, not a lockstep number.
 
-> **Requires:** `rtk` ≥ 0.28 on `PATH` (`rtk --version` exits 0). Without it, the plugin is a no-op passthrough.
+> **Requires:** `rtk` on `PATH` (`rtk --version` exits 0). The plugin does **not** install or manage rtk — **you must install and update rtk yourself** (e.g. `cargo install rtk` or download a release binary). When rtk is absent the plugin is a silent no-op passthrough.
 
 ## Install & enable
 
@@ -55,9 +55,9 @@ dsh web   # restart to apply
 
 The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml). It swaps the stock sandbox executor for `RtkSandboxBashExecutor` (file confinement preserved) and leaves the unconfined `RtkBashExecutor` available for `danger-full-access` setups.
 
-## Whitelisted commands
+## Which commands are routed
 
-`git` `gh` `glab` `gt` `cargo` `go` `golangci-lint` `npm` `npx` `pnpm` `docker` `kubectl` `aws` `ruff` `pytest` `mypy` `uv` `dotnet` `jest` `vitest` `prisma` `tsc` `playwright` `curl` `wget` `grep` `rg` `find` `psql` `mvn` `gradlew` `sbt` `pip` `rspec` `rubocop` `rake` `php` `phpunit` `phpstan` `pint` `pest` `next`
+The set of commands eligible for rtk-wrapping is defined by **rtk itself** — see the [rtk command reference](https://github.com/rtk-ai/rtk#supported-ecosystems) / [`README.md`](https://github.com/rtk-ai/rtk/blob/develop/README.md#test-runners) for the authoritative, maintained list. This plugin mirrors that list; when rtk adds a new subcommand, upgrade rtk (not this plugin) to pick it up.
 
 Complex commands — pipelines, `&&`/`;`, redirects, `$( )`, env assignments — always run natively regardless of the whitelist.
 
