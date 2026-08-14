@@ -19,7 +19,7 @@
  *    the identity, so a deployment without rtk behaves exactly like the plain
  *    local executor.
  *
- * @module @deepseek-ai/dsh-bash-rtk/wrap
+ * @module @deeptrial/dsh-bash-rtk/wrap
  */
 
 /** Shell metacharacters that change how the first command's output would be consumed. */
@@ -69,8 +69,6 @@ const RTK_COMMAND_MAP: Readonly<Record<string, string>> = {
   pint: 'pint',
   pest: 'pest',
   next: 'next',
-  lit: 'lit',
-  make: 'make',
 } as const
 
 /**
