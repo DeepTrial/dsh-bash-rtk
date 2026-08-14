@@ -69,6 +69,8 @@ const RTK_COMMAND_MAP: Readonly<Record<string, string>> = {
   pint: 'pint',
   pest: 'pest',
   next: 'next',
+  lit: 'lit',
+  make: 'make',
 } as const
 
 /**
