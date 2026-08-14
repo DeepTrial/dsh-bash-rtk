@@ -1,0 +1,56 @@
+{
+  "name": "@karlx/dsh-bash-rtk",
+  "description": "DeepSeek Harness bash executor plugin that routes eligible commands through rtk (Rust Token Killer) to compress tool output and save tokens. Optional overlay: install, then enable via --patch.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./wrap": "./lib/wrap.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src",
+    "tests",
+    "cordis.patch.yml",
+    "dsh.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check": "pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-bash-local": "*",
+    "@deepseek-ai/dsh-bash-sandbox": "*",
+    "@deepseek-ai/dsh-shell": "*",
+    "cordis": "^4.0.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-bash-local": "link:../deepseek-harness/packages/shell/bash-local",
+    "@deepseek-ai/dsh-bash-sandbox": "link:../deepseek-harness/packages/shell/bash-sandbox",
+    "@deepseek-ai/dsh-shell": "link:../deepseek-harness/packages/shell/shell",
+    "@deepseek-ai/dsh-subprocess-local": "link:../deepseek-harness/packages/subprocess/subprocess-local",
+    "@deepseek-ai/dsh-sandbox": "link:../deepseek-harness/packages/sandbox/sandbox",
+    "@deepseek-ai/dsh-sandbox-local": "link:../deepseek-harness/packages/sandbox/sandbox-local",
+    "@deepseek-ai/dsh-sandbox-policy": "link:../deepseek-harness/packages/sandbox/sandbox-policy",
+    "cordis": "link:../deepseek-harness/vendor/cordis",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0",
+    "tsdown": "^0.22.2",
+    "vitest": "^4.1.0"
+  },
+  "license": "MIT"
+}

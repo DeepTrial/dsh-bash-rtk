@@ -1,0 +1,24 @@
+# dsh-bash-rtk optional overlay: routes eligible bash commands through rtk
+# (Rust Token Killer) to compress tool output and save tokens.
+#
+# The inserted executor is DISABLED by default, so installing the plugin has no
+# effect. To enable it, add these two lines to your profile's cordis.patch.yml
+# (the default bash-sandbox must be disabled and the rtk executor enabled):
+#
+#   - id: bash-sandbox
+#     disabled: true
+#   - id: bash-rtk
+#     disabled: false
+#
+# The rtk executor inherits the sandbox executor's confinement mechanics and
+# only rewrites the shell source, so sandbox policy, denial/enforcement facts,
+# workdir/timeout/env/exit-code, and background-job semantics are unchanged;
+# only eligible commands' output is filtered. Requires the `rtk` binary on
+# PATH; without it, every command passes through unchanged.
+
+- insert:
+    - id: bash-rtk
+      name: '@karlx/dsh-bash-rtk'
+      disabled: true
+      config:
+        timeoutMs: 60000
