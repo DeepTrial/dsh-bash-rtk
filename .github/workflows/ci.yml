@@ -10,8 +10,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the plugin into a subdirectory so it sits beside the sibling
+      # deepseek-harness checkout — the plugin's `link:` devDependencies
+      # resolve relative to the plugin package directory (../deepseek-harness).
       - name: Checkout plugin
         uses: actions/checkout@v4
+        with:
+          path: dsh-bash-rtk
 
       # The plugin's devDependencies use `link:` into a local deepseek-harness
       # checkout (packages/shell/bash-local, vendor/cordis, ...). CI clones that
@@ -48,7 +53,9 @@ jobs:
         run: pnpm build:lib:host
 
       - name: Install plugin deps
+        working-directory: dsh-bash-rtk
         run: pnpm install --ignore-scripts
 
       - name: Typecheck + test + build
+        working-directory: dsh-bash-rtk
         run: pnpm run check
