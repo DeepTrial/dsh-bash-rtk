@@ -29,7 +29,7 @@ async function setup(config: { mode?: SandboxMode } = {}) {
   await ctx.plugin(SandboxPolicyService, { ...mode !== undefined ? { mode } : {} })
   await ctx.plugin(LocalSubprocessRuntime)
   ;(ctx.subprocess as LocalSubprocessRuntime).internals = { spillDir }
-  await ctx.plugin(RtkSandboxBashExecutor, { graceMs: 200, ...execConfig })
+  await ctx.plugin(RtkSandboxBashExecutor, { graceMs: 200, rtkAvailable: true, ...execConfig })
   const bash = ctx.shell as RtkSandboxBashExecutor
   return { ctx, bash, calls }
 }
