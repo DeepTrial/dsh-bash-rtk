@@ -3,12 +3,42 @@
 [![CI](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml/badge.svg)](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/DeepTrial/dsh-bash-rtk)](https://github.com/DeepTrial/dsh-bash-rtk/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/DeepTrial/dsh-bash-rtk/blob/main/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-339933?logo=nodedotjs)](https://nodejs.org/)
 
 > Route eligible shell commands through [rtk](https://github.com/rtk-ai/rtk) (Rust Token Killer) inside the DeepSeek Harness (`dsh`) bash executor — compress tool output, save tokens, change nothing else.
 
 [中文版](README.zh.md)
 
 ---
+
+## Table of Contents
+
+- [Quick Example](#quick-example)
+- [Requirements](#requirements)
+- [Why](#why)
+- [How it works](#how-it-works)
+- [Install & enable](#install--enable)
+- [API / Configuration](#api--configuration)
+- [Which commands are routed](#which-commands-are-routed)
+- [Development](#development)
+- [License](#license)
+
+---
+
+## Quick Example
+
+The plugin rewrites commands at the `resolve()` boundary — before anything runs:
+
+| Input (`command`) | Resolved output | Reason |
+|---|---|---|
+| `git status` | `rtk git status` | Simple + whitelisted |
+| `cargo build --release` | `rtk cargo build --release` | Simple + whitelisted |
+| `git status \| grep x` | `git status \| grep x` | Complex shell — **passthrough** |
+| `ls -la` | `ls -la` | Not whitelisted — **passthrough** |
+| `git status` (rtk absent) | `git status` | Binary missing — **identity fallback** |
+
+Everything else — workdir, timeout, env, exit code, sandbox confinement — is inherited unchanged.
 
 ## Requirements
 
@@ -53,10 +83,11 @@ The plugin is **disabled by default** — installing it does nothing until you o
 
 ```sh
 # 1) from a local checkout
-dsh plugin --profile web add <path-to-this-dir>
+dsh plugin --profile web add "<path-to-this-dir>"
 
-# 2) or directly from a GitHub release tarball (no local clone needed)
-dsh plugin --profile web add https://github.com/DeepTrial/dsh-bash-rtk/archive/refs/tags/v0.1.0.tar.gz
+# 2) or directly from the latest GitHub release tarball (no local clone needed)
+dsh plugin --profile web add \
+  "https://github.com/DeepTrial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk.tar.gz"
 
 # enable it via an optional overlay — add to your profile's cordis.patch.yml:
 #   - id: bash-sandbox
@@ -69,6 +100,16 @@ dsh web   # restart to apply
 
 The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml). It swaps the stock sandbox executor for `RtkSandboxBashExecutor` (file confinement preserved) and leaves the unconfined `RtkBashExecutor` available for `danger-full-access` setups.
 
+## API / Configuration
+
+Both executors accept the same base config as their stock counterparts (`LocalBashExecutor` / `SandboxBashExecutor`) plus one optional field:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `rtkAvailable` | `boolean` | `resolveRtk()` result | Force-enable or force-disable rtk wrapping. Useful for tests or deployments where the binary path is non-standard. |
+
+All other options — `cwd`, `timeoutMs`, `graceMs`, etc. — are inherited unchanged from the upstream executors.
+
 ## Which commands are routed
 
 The set of commands eligible for rtk-wrapping is defined by **rtk itself** — see the [rtk command reference](https://github.com/rtk-ai/rtk#supported-ecosystems) / [`README.md`](https://github.com/rtk-ai/rtk/blob/develop/README.md#test-runners) for the authoritative, maintained list. This plugin mirrors that list; when rtk adds a new subcommand, upgrade rtk (not this plugin) to pick it up.
@@ -78,10 +119,21 @@ Complex commands — pipelines, `&&`/`;`, redirects, `$( )`, env assignments —
 ## Development
 
 ```sh
-pnpm install && pnpm run check    # typecheck + test + build
+# 1. clone the plugin and its sibling harness
+git clone https://github.com/DeepTrial/dsh-bash-rtk.git
+git clone https://github.com/deepseek-ai/deepseek-harness.git
+
+# 2. install harness deps and build the libraries the plugin links against
+cd deepseek-harness && pnpm install && pnpm build:lib:host
+
+# 3. install plugin deps and run checks
+cd ../dsh-bash-rtk && pnpm install --ignore-scripts
+pnpm run check        # typecheck + test + build
+pnpm run test         # tests only
+pnpm run typecheck    # tsc only
 ```
 
-`devDependencies` use `link:` into a local `deepseek-harness` checkout; tests run inside that workspace (the `@deepseek-ai/dsh-*` packages must resolve).
+`devDependencies` use `link:` into the local `deepseek-harness` checkout; tests run inside that workspace (the `@deepseek-ai/dsh-*` packages must resolve).
 
 ## License
 
