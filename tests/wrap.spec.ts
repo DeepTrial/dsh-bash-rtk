@@ -34,6 +34,12 @@ describe('wrapWithRtk', () => {
       expect(wrapWithRtk('ls -la', true)).toBe('ls -la')
       expect(wrapWithRtk('python script.py', true)).toBe('python script.py')
     })
+    it('sudo-prefixed commands are not wrapped', () => {
+      expect(wrapWithRtk('sudo git status', true)).toBe('sudo git status')
+    })
+    it('env-assigned commands are not wrapped', () => {
+      expect(wrapWithRtk('FOO=bar git status', true)).toBe('FOO=bar git status')
+    })
   })
 
   describe('whitelisted simple commands are wrapped', () => {
@@ -66,6 +72,9 @@ describe('wrapWithRtk', () => {
     })
     it('whitespace-only command passes through', () => {
       expect(wrapWithRtk('   ', true)).toBe('   ')
+    })
+    it('preserves leading whitespace', () => {
+      expect(wrapWithRtk('  git status', true)).toBe('rtk git status')
     })
   })
 })
