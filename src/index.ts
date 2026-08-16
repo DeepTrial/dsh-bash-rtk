@@ -21,6 +21,19 @@ import { wrapWithRtk } from './wrap.ts'
 export { wrapWithRtk } from './wrap.ts'
 export type { Config } from '@deepseek-ai/dsh-bash-local'
 
+/** Extend the upstream config so cordis plugin() accepts rtkAvailable. */
+declare module '@deepseek-ai/dsh-bash-local' {
+  interface Config {
+    rtkAvailable?: boolean
+  }
+}
+
+declare module '@deepseek-ai/dsh-bash-sandbox' {
+  interface Config {
+    rtkAvailable?: boolean
+  }
+}
+
 /** Probe for the `rtk` binary on PATH; absence degrades to the identity transform. */
 function resolveRtk(): boolean {
   try {
@@ -32,15 +45,6 @@ function resolveRtk(): boolean {
   }
 }
 
-/** Config extension that lets callers (especially tests) override rtk availability. */
-export interface RtkLocalConfig extends LocalConfig {
-  rtkAvailable?: boolean
-}
-
-export interface RtkSandboxConfig extends SandboxConfig {
-  rtkAvailable?: boolean
-}
-
 /**
  * rtk-wrapping LOCAL bash executor (no file sandbox). Registers as `ctx.shell`
  * in place of `dsh-bash-local`; use where confinement is not required (e.g.
@@ -49,7 +53,7 @@ export interface RtkSandboxConfig extends SandboxConfig {
 export class RtkBashExecutor extends LocalBashExecutor {
   private readonly rtkAvailable: boolean
 
-  constructor(ctx: Context, config: RtkLocalConfig) {
+  constructor(ctx: Context, config: LocalConfig) {
     super(ctx, config)
     this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
   }
@@ -71,7 +75,7 @@ export class RtkSandboxBashExecutor extends SandboxBashExecutor {
 
   private readonly rtkAvailable: boolean
 
-  constructor(ctx: Context, config: RtkSandboxConfig) {
+  constructor(ctx: Context, config: SandboxConfig) {
     super(ctx, config)
     this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
   }
