@@ -32,6 +32,15 @@ function resolveRtk(): boolean {
   }
 }
 
+/** Config extension that lets callers (especially tests) override rtk availability. */
+interface RtkLocalConfig extends LocalConfig {
+  rtkAvailable?: boolean
+}
+
+interface RtkSandboxConfig extends SandboxConfig {
+  rtkAvailable?: boolean
+}
+
 /**
  * rtk-wrapping LOCAL bash executor (no file sandbox). Registers as `ctx.shell`
  * in place of `dsh-bash-local`; use where confinement is not required (e.g.
@@ -40,9 +49,9 @@ function resolveRtk(): boolean {
 export class RtkBashExecutor extends LocalBashExecutor {
   private readonly rtkAvailable: boolean
 
-  constructor(ctx: Context, config: LocalConfig) {
+  constructor(ctx: Context, config: RtkLocalConfig) {
     super(ctx, config)
-    this.rtkAvailable = resolveRtk()
+    this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
   }
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
@@ -62,9 +71,9 @@ export class RtkSandboxBashExecutor extends SandboxBashExecutor {
 
   private readonly rtkAvailable: boolean
 
-  constructor(ctx: Context, config: SandboxConfig) {
+  constructor(ctx: Context, config: RtkSandboxConfig) {
     super(ctx, config)
-    this.rtkAvailable = resolveRtk()
+    this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
   }
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
