@@ -10,14 +10,15 @@
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
     },
-    "./wrap": "./lib/wrap.js",
+    "./wrap": {
+      "types": "./lib/wrap.d.ts",
+      "default": "./lib/wrap.js"
+    },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
-    "src",
-    "tests",
     "cordis.patch.yml",
     "dsh.plugin.json"
   ],
@@ -52,5 +53,28 @@
     "tsdown": "^0.22.2",
     "vitest": "^4.1.0"
   },
-  "license": "MIT"
+  "keywords": [
+    "deepseek",
+    "dsh",
+    "deepseek-harness",
+    "rtk",
+    "token-compression",
+    "bash",
+    "shell",
+    "cordis",
+    "plugin"
+  ],
+  "homepage": "https://github.com/DeepTrial/dsh-bash-rtk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DeepTrial/dsh-bash-rtk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DeepTrial/dsh-bash-rtk/issues"
+  },
+  "author": "DeepTrial",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }
