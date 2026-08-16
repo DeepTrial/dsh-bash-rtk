@@ -6,7 +6,7 @@ import { RtkBashExecutor } from '../src/index.ts'
 async function setup() {
   const ctx = new Context()
   await ctx.plugin(LocalSubprocessRuntime)
-  await ctx.plugin(RtkBashExecutor, {})
+  await ctx.plugin(RtkBashExecutor, { rtkAvailable: true })
   const bash = ctx.shell as RtkBashExecutor
   return { ctx, bash }
 }
