@@ -3,10 +3,10 @@ import { Context } from 'cordis'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { RtkBashExecutor } from '../src/index.ts'
 
-async function setup() {
+async function setup(opts: { rtkAvailable?: boolean } = {}) {
   const ctx = new Context()
   await ctx.plugin(LocalSubprocessRuntime)
-  await ctx.plugin(RtkBashExecutor, { rtkAvailable: true })
+  await ctx.plugin(RtkBashExecutor, { rtkAvailable: true, ...opts })
   const bash = ctx.shell as RtkBashExecutor
   return { ctx, bash }
 }
@@ -33,5 +33,11 @@ describe('RtkBashExecutor', () => {
     const { bash } = await setup()
     const spec = bash.resolve({ command: 'ls -la' })
     expect(spec.command).toBe('ls -la')
+  })
+
+  it('falls back to identity when rtkAvailable is false', async () => {
+    const { bash } = await setup({ rtkAvailable: false })
+    const spec = bash.resolve({ command: 'git status' })
+    expect(spec.command).toBe('git status')
   })
 })
