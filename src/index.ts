@@ -27,12 +27,6 @@ declare module '@deepseek-ai/dsh-bash-local' {
   }
 }
 
-declare module '@deepseek-ai/dsh-bash-sandbox' {
-  interface Config {
-    rtkAvailable?: boolean
-  }
-}
-
 /** Probe for the `rtk` binary on PATH; absence degrades to the identity transform. */
 function resolveRtk(): boolean {
   try {
