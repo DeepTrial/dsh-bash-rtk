@@ -1,12 +1,19 @@
 # dsh-bash-rtk
 
+[![CI](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml/badge.svg)](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/DeepTrial/dsh-bash-rtk)](https://github.com/DeepTrial/dsh-bash-rtk/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/DeepTrial/dsh-bash-rtk/blob/main/LICENSE)
 
 > Route eligible shell commands through [rtk](https://github.com/rtk-ai/rtk) (Rust Token Killer) inside the DeepSeek Harness (`dsh`) bash executor — compress tool output, save tokens, change nothing else.
 
 [中文版](README.zh.md)
 
 ---
+
+## Requirements
+
+- **Node.js:** >= 20.0.0
+- **rtk:** `rtk --version` must exit 0 on PATH (install separately, e.g. `cargo install rtk`)
 
 ## Why
 
