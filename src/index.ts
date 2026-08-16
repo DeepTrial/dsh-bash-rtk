@@ -19,7 +19,6 @@ import type { ShellExecRequest, ShellExecSpec } from '@deepseek-ai/dsh-shell'
 import { wrapWithRtk } from './wrap.ts'
 
 export { wrapWithRtk } from './wrap.ts'
-export type { Config } from '@deepseek-ai/dsh-bash-local'
 
 /** Extend the upstream config so cordis plugin() accepts rtkAvailable. */
 declare module '@deepseek-ai/dsh-bash-local' {
