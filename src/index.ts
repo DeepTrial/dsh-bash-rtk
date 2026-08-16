@@ -33,11 +33,11 @@ function resolveRtk(): boolean {
 }
 
 /** Config extension that lets callers (especially tests) override rtk availability. */
-interface RtkLocalConfig extends LocalConfig {
+export interface RtkLocalConfig extends LocalConfig {
   rtkAvailable?: boolean
 }
 
-interface RtkSandboxConfig extends SandboxConfig {
+export interface RtkSandboxConfig extends SandboxConfig {
   rtkAvailable?: boolean
 }
 
