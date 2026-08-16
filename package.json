@@ -26,7 +26,6 @@
     "build": "tsdown",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "check": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dsh": {
@@ -48,7 +47,6 @@
     "@deepseek-ai/dsh-sandbox": "link:../deepseek-harness/packages/sandbox/sandbox",
     "@deepseek-ai/dsh-sandbox-local": "link:../deepseek-harness/packages/sandbox/sandbox-local",
     "@deepseek-ai/dsh-sandbox-policy": "link:../deepseek-harness/packages/sandbox/sandbox-policy",
-    "@vitest/coverage-v8": "^4.1.0",
     "cordis": "link:../deepseek-harness/vendor/cordis",
     "@types/node": "^22.0.0",
     "typescript": "^5.9.0",
