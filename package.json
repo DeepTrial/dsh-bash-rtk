@@ -34,10 +34,10 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-bash-local": "*",
-    "@deepseek-ai/dsh-bash-sandbox": "*",
-    "@deepseek-ai/dsh-shell": "*",
-    "cordis": "^4.0.0"
+    "@deepseek-ai/dsh-bash-local": "0.0.1-rc.1",
+    "@deepseek-ai/dsh-bash-sandbox": "0.0.1-rc.1",
+    "@deepseek-ai/dsh-shell": "0.0.1-rc.5",
+    "cordis": "^4.0.1-rc.1"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-bash-local": "link:../deepseek-harness/packages/shell/bash-local",

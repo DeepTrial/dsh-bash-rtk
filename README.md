@@ -77,6 +77,21 @@ The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --ver
 
 > **Requires:** `rtk` on `PATH` (`rtk --version` exits 0). The plugin does **not** install or manage rtk — **you must install and update rtk yourself** (e.g. `cargo install rtk` or download a release binary). When rtk is absent the plugin is a silent no-op passthrough.
 
+### Compatibility & version alignment
+
+This plugin depends on three `@deepseek-ai/dsh-*` packages that DeepSeek Harness publishes to npm **independently** from the `dsh` aggregate package. As of this release the versions are deliberately pinned (see `peerDependencies` in `package.json`):
+
+| Package | Pinned version |
+|---|---|
+| `@deepseek-ai/dsh-bash-local` | `0.0.1-rc.1` |
+| `@deepseek-ai/dsh-bash-sandbox` | `0.0.1-rc.1` |
+| `@deepseek-ai/dsh-shell` | `0.0.1-rc.5` |
+| `cordis` | `^4.0.1-rc.1` |
+
+The plugin's `dsh.plugin.json` declares `"engines": { "dsh": "0.1.1-rc.2" }`, i.e. it is verified against the `dsh` aggregate `0.1.1-rc.2`.
+
+> **Known version skew:** `dsh` (the aggregate, what `npx @deepseek-ai/dsh` installs) and its `@deepseek-ai/dsh-*` sub-packages are on **separate semver tracks** — the aggregate can be `0.1.1-rc.2` while the published sub-packages are still `0.0.1-rc.1`. This plugin pins to the *published* sub-package versions so a plain `dsh plugin add` resolves cleanly. If a future `dsh` release changes the `LocalBashExecutor.resolve()` / `ShellExecSpec` API surface, a sub-package bump on npm will be required before this plugin can track it. Watch the [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases) for a matching update.
+
 ## Install & enable
 
 The plugin is **disabled by default** — installing it does nothing until you opt in.
