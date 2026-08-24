@@ -36,8 +36,12 @@
   "peerDependencies": {
     "@deepseek-ai/dsh-bash-local": "0.0.1-rc.1",
     "@deepseek-ai/dsh-bash-sandbox": "0.0.1-rc.1",
-    "@deepseek-ai/dsh-shell": "0.0.1-rc.5",
-    "cordis": "^4.0.1-rc.1"
+    "@deepseek-ai/dsh-shell": "0.0.1-rc.5"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-bash-local": { "optional": true },
+    "@deepseek-ai/dsh-bash-sandbox": { "optional": true },
+    "@deepseek-ai/dsh-shell": { "optional": true }
   },
   "devDependencies": {
     "@deepseek-ai/dsh-bash-local": "link:../deepseek-harness/packages/shell/bash-local",
