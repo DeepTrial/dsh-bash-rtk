@@ -1,7 +1,7 @@
 {
   "name": "@deeptrial/dsh-bash-rtk",
   "description": "DeepSeek Harness bash executor plugin that routes eligible commands through rtk (Rust Token Killer) to compress tool output and save tokens. Optional overlay: install, then enable via --patch.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
