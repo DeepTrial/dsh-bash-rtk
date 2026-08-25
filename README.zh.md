@@ -77,6 +77,30 @@ model → dsh bash 工具 → RtkBashExecutor.resolve()
 
 > **要求：** `rtk` 在 `PATH` 上（`rtk --version` 退出码为 0）。插件**不会**安装或管理 rtk —— **你必须自行安装并更新 rtk**（例如 `cargo install rtk` 或下载发布二进制）。当 rtk 缺失时，插件静默退化为透传。
 
+## 兼容性与版本对齐
+
+本插件依赖三个 `@deepseek-ai/dsh-*` 包，DeepSeek Harness 将它们与 `dsh` 聚合包**分开**发布到 npm。由于这些子包（以及 `dsh` 本身）都以**预发布**形式（`x.y.z-rc.n`）发布，peer 范围必须按 [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) 带上显式的预发布分支——像 `>=0.0.1-rc.1 <0.2.0` 这样"看起来很宽"的范围会*静默*排除所有 `0.1.0-*` / `0.1.1-*` 预发布（node-semver 只有当某比较符与候选版本同 `major.minor.patch` 元组且自身也带预发布标签时，才放行预发布版本）。
+
+实际范围（见 `package.json` 的 `peerDependencies`）为：
+
+```
+"@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+```
+
+`cordis` **不是** peer 依赖：它由 `dsh` 在运行时注入，声明它会导致任何所在 registry 没有对应 `cordis` 发布的用户安装失败。三个 `@deepseek-ai/dsh-*` peer 都在 `peerDependenciesMeta` 中标记为 `optional`，因此在它们缺失时插件仍可加载（此时退化为透传）。
+
+本插件的 `dsh.plugin.json` 声明：
+
+```json
+"engines": { "dsh": ">=0.1.0-rc.6 <0.2.0 || >=0.1.1-rc.1 <0.2.0-0" }
+```
+
+即：以 `dsh` `0.1.1-rc.2` 为验证基准，接受任意 `0.1.x` 预发布/正式版，并**刻意排除** `0.2.0+`（未来大版本可能改动 `LocalBashExecutor.resolve()` / `ShellExecSpec` API，届时本插件需要一次子包升级才能跟进）。
+
+> **已知的版本错位：** `dsh`（聚合包，即 `npx @deepseek-ai/dsh` 安装的）与其 `@deepseek-ai/dsh-*` 子包处于**独立的 semver 轨道**——聚合包可能是 `0.1.1-rc.2`，而发布的子包仍是 `0.0.1-rc.1`。上述范围锁定到*已发布*的子包版本，因此普通 `dsh plugin add` 能干净解析。跟进匹配更新请关注 [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases)。
+
 ## 安装与启用
 
 插件**默认禁用** —— 安装后不会生效，需手动开启。
@@ -87,7 +111,7 @@ dsh plugin --profile web add "<path-to-this-dir>"
 
 # 2) 或直接用最新 GitHub release tarball 安装（无需本地 clone）
 dsh plugin --profile web add \
-  "https://github.com/DeepTrial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk.tar.gz"
+  "https://github.com/DeepTrial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk-latest.tgz"
 
 # 通过可选 overlay 启用 —— 在你的 profile 的 cordis.patch.yml 中添加：
 #   - id: bash-sandbox
