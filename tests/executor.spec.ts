@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Context } from 'cordis'
+import { Context } from '@deepseek-ai/cordis'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { RtkBashExecutor } from '../src/index.ts'
 
@@ -39,5 +39,13 @@ describe('RtkBashExecutor', () => {
     const { bash } = await setup({ rtkAvailable: false })
     const spec = bash.resolve({ command: 'git status' })
     expect(spec.command).toBe('git status')
+  })
+
+  it('runs a resolved spec through the dsh >=0.2 execute()/result() contract', async () => {
+    const { bash } = await setup()
+    const execution = await bash.execute(bash.resolve({ command: 'printf rtk-ok' }))
+    const result = await execution.result()
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.text).toBe('rtk-ok')
   })
 })

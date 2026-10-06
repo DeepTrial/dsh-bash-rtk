@@ -18,7 +18,7 @@ export default [
     clean: true,
     deps: {
       neverBundle: [
-        'cordis',
+        '@deepseek-ai/cordis',
         '@deepseek-ai/dsh-bash-local',
         '@deepseek-ai/dsh-bash-sandbox',
         '@deepseek-ai/dsh-shell',

@@ -79,27 +79,33 @@ model → dsh bash 工具 → RtkBashExecutor.resolve()
 
 ## 兼容性与版本对齐
 
-本插件依赖三个 `@deepseek-ai/dsh-*` 包，DeepSeek Harness 将它们与 `dsh` 聚合包**分开**发布到 npm。由于这些子包（以及 `dsh` 本身）都以**预发布**形式（`x.y.z-rc.n`）发布，peer 范围必须按 [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) 带上显式的预发布分支——像 `>=0.0.1-rc.1 <0.2.0` 这样"看起来很宽"的范围会*静默*排除所有 `0.1.0-*` / `0.1.1-*` 预发布（node-semver 只有当某比较符与候选版本同 `major.minor.patch` 元组且自身也带预发布标签时，才放行预发布版本）。
+本插件以 `dsh` **0.2.1-alpha.1** 为验证基准，同时继续支持 `0.1.x` 线。
 
-实际范围（见 `package.json` 的 `peerDependencies`）为：
+`dsh` 会对每个插件的安装做兼容性门禁：`@deepseek-ai/dsh-app-boot` 读取插件的 `peerDependencies`，对其中每个 `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 条目按**当前运行中的 `dsh` 版本**执行 `semver.satisfies(runtime, range, { includePrerelease: true })`。若某个范围的所有分支都无法纳入 `0.2.1-alpha.1`（例如 `0.1.1` 版本的 `… || >=0.1.1-rc.1 <0.2.0-0`），该检查即失败，插件管理器会以 `is incompatible with dsh 0.2.1-alpha.1` 拒绝安装（除非手动通过 `dsh plugin allow-version` 授予精确版本豁免）。插件市场（marketplace）对 `engines.dsh` 与宿主 peer 采用同样的"预发布感知"判定。
+
+现在随包发布的范围（见 `package.json` 的 `peerDependencies`）增加了显式的 `0.2.x` 分支：
 
 ```
-"@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
-"@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
-"@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
+"@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
+"@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
 ```
 
-`cordis` **不是** peer 依赖：它由 `dsh` 在运行时注入，声明它会导致任何所在 registry 没有对应 `cordis` 发布的用户安装失败。三个 `@deepseek-ai/dsh-*` peer 都在 `peerDependenciesMeta` 中标记为 `optional`，因此在它们缺失时插件仍可加载（此时退化为透传）。
+预发布分支规则依然成立：像 `>=0.0.1-rc.1 <0.3.0` 这样"看起来很宽"的范围，在 node-semver 默认规则下会*静默*排除所有 `0.1.0-*` / `0.1.1-*` / `0.2.0-*` 预发布（只有当某比较符与候选版本同 `major.minor.patch` 元组、且自身也带预发布标签时才放行）。由于 `dsh` 的门禁与市场都以 `includePrerelease: true` 求值，上面那些显式的 `<0.x.0-0` 上界正是让 `0.2.1-alpha.1` 这类运行中的预发布版本被接受的原因。
 
-本插件的 `dsh.plugin.json` 声明：
+`package.json` 同时把宿主要求声明在发现工具读取的位置：
 
 ```json
-"engines": { "dsh": ">=0.1.0-rc.6 <0.2.0 || >=0.1.1-rc.1 <0.2.0-0" }
+"engines": { "node": ">=20.0.0", "dsh": ">=0.1.0-rc.6 <0.2.0 || >=0.2.0-0 <0.3.0-0" }
 ```
 
-即：以 `dsh` `0.1.1-rc.2` 为验证基准，接受任意 `0.1.x` 预发布/正式版，并**刻意排除** `0.2.0+`（未来大版本可能改动 `LocalBashExecutor.resolve()` / `ShellExecSpec` API，届时本插件需要一次子包升级才能跟进）。
+（`dsh.plugin.json` 为旧版读取器镜像同一范围；`dsh` 自身读取的是 `package.json`。）
 
-> **已知的版本错位：** `dsh`（聚合包，即 `npx @deepseek-ai/dsh` 安装的）与其 `@deepseek-ai/dsh-*` 子包处于**独立的 semver 轨道**——聚合包可能是 `0.1.1-rc.2`，而发布的子包仍是 `0.0.1-rc.1`。上述范围锁定到*已发布*的子包版本，因此普通 `dsh plugin add` 能干净解析。跟进匹配更新请关注 [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases)。
+三个 `@deepseek-ai/dsh-*` peer 仍在 `peerDependenciesMeta` 中标记为 `optional`，因此它们缺失时插件仍可安装（此时退化为透传）。`@deepseek-ai/cordis` **不是** peer 依赖——它由 `dsh` 在运行时注入，这里只作为类型检查用的 dev 依赖。
+
+**0.2 移植具体改了什么。** 执行接缝没变——插件仍然只覆写 `resolve()`，0.2 的 `ShellExecSpec` 只是多了一个 `sandboxPolicy` 字段，展开后原样透传。真正需要改的是编译期：模块说明符 `cordis` → `@deepseek-ai/cordis`（无作用域的旧别名已不存在），以及测试使用的执行器接口（`run()`/`start()` 被 `execute()` + `result()` 取代；`SandboxProvider.confine()` 变为 async 并返回 `Promise<ConfinedArgv>`；`SandboxPolicyService` 现在需要 `ctx.sessionProjections`）。
+
+> **已知的版本错位：** `dsh`（聚合包，即 `npx @deepseek-ai/dsh` 安装的）与其 `@deepseek-ai/dsh-*` 子包处于**独立的 semver 轨道**——聚合包可能是 `0.1.1-rc.2`，而发布的子包仍是 `0.0.1-rc.1`。上述范围锁定到*已发布*的子包版本，但 `dsh` 是用**它自己的版本**去校验这些范围的，因此每条受支持的发布线都需要一个显式分支。跟进匹配更新请关注 [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases)。
 
 ## 安装与启用
 
@@ -143,21 +149,20 @@ dsh web   # 重启以生效
 ## 开发
 
 ```sh
-# 1. 克隆插件及其依赖的 harness
+# 1. 克隆插件
 git clone https://github.com/DeepTrial/dsh-bash-rtk.git
-git clone https://github.com/deepseek-ai/deepseek-harness.git
 
-# 2. 安装 harness 依赖并构建插件所链接的库
-cd deepseek-harness && pnpm install && pnpm build:lib:host
+# 2. 安装插件构建所依赖的已发布 harness 包
+cd dsh-bash-rtk && pnpm install --ignore-scripts
 
-# 3. 安装插件依赖并运行检查
-cd ../dsh-bash-rtk && pnpm install --ignore-scripts
+# 3. 运行检查
 pnpm run check        # 类型检查 + 测试 + 构建
 pnpm run test         # 仅测试
 pnpm run typecheck    # 仅 tsc
 ```
 
-`devDependencies` 通过 `link:` 指向本地 `deepseek-harness` 源码仓；测试需在该 workspace 内运行（`@deepseek-ai/dsh-*` 包必须可解析）。
+`devDependencies` 固定到插件构建与测试所依赖的已发布 `@deepseek-ai/dsh-*` / `@deepseek-ai/cordis`
+版本（当前为 `0.2.1-alpha.1` 线），不再需要同级的 `deepseek-harness` 源码仓。
 
 ## 许可证
 
