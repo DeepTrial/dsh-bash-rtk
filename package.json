@@ -1,7 +1,7 @@
 {
   "name": "@deeptrial/dsh-bash-rtk",
   "description": "DeepSeek Harness bash executor plugin that routes eligible commands through rtk (Rust Token Killer) to compress tool output and save tokens. Optional overlay: install, then enable via --patch.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -34,9 +34,9 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-bash-local": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0",
-    "@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0",
-    "@deepseek-ai/dsh-shell": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+    "@deepseek-ai/dsh-bash-local": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0",
+    "@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0",
+    "@deepseek-ai/dsh-shell": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-bash-local": { "optional": true },
@@ -44,14 +44,15 @@
     "@deepseek-ai/dsh-shell": { "optional": true }
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-bash-local": "link:../deepseek-harness/packages/shell/bash-local",
-    "@deepseek-ai/dsh-bash-sandbox": "link:../deepseek-harness/packages/shell/bash-sandbox",
-    "@deepseek-ai/dsh-shell": "link:../deepseek-harness/packages/shell/shell",
-    "@deepseek-ai/dsh-subprocess-local": "link:../deepseek-harness/packages/subprocess/subprocess-local",
-    "@deepseek-ai/dsh-sandbox": "link:../deepseek-harness/packages/sandbox/sandbox",
-    "@deepseek-ai/dsh-sandbox-local": "link:../deepseek-harness/packages/sandbox/sandbox-local",
-    "@deepseek-ai/dsh-sandbox-policy": "link:../deepseek-harness/packages/sandbox/sandbox-policy",
-    "cordis": "link:../deepseek-harness/vendor/cordis",
+    "@deepseek-ai/cordis": "~4.0.5-alpha.1",
+    "@deepseek-ai/dsh-bash-local": "0.2.1-alpha.1",
+    "@deepseek-ai/dsh-bash-sandbox": "0.2.1-alpha.1",
+    "@deepseek-ai/dsh-sandbox": "0.2.1-alpha.1",
+    "@deepseek-ai/dsh-sandbox-policy": "0.2.1-alpha.1",
+    "@deepseek-ai/dsh-session-projection": "0.2.1-alpha.1",
+    "@deepseek-ai/dsh-shell": "0.2.1-alpha.1",
+    "@deepseek-ai/dsh-subprocess-local": "0.2.1-alpha.1",
+    "@deepseek-ai/schemastery": "~3.18.5-alpha.1",
     "@types/node": "^22.0.0",
     "typescript": "^5.9.0",
     "tsdown": "^0.22.2",
@@ -79,6 +80,7 @@
   "author": "DeepTrial",
   "license": "MIT",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.0.0",
+    "dsh": ">=0.1.0-rc.6 <0.2.0 || >=0.2.0-0 <0.3.0-0"
   }
 }

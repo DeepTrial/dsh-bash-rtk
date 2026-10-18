@@ -79,27 +79,57 @@ The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --ver
 
 ### Compatibility & version alignment
 
-This plugin depends on three `@deepseek-ai/dsh-*` packages that DeepSeek Harness publishes to npm **independently** from the `dsh` aggregate package. Because those sub-packages (and `dsh` itself) ship as **prereleases** (`x.y.z-rc.n`), the peer ranges must carry an explicit prerelease branch per [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) — a broad-looking range like `>=0.0.1-rc.1 <0.2.0` would *silently* exclude every `0.1.0-*` / `0.1.1-*` prerelease (node-semver only lets a prerelease satisfy a range if some comparator shares its exact `major.minor.patch` tuple and also carries a prerelease tag).
+The plugin is verified against `dsh` **0.2.1-alpha.1** and keeps the `0.1.x` line working.
 
-The actual ranges (see `peerDependencies` in `package.json`) are:
+`dsh` gates the installation of every plugin: `@deepseek-ai/dsh-app-boot` reads the plugin's
+`peerDependencies` and checks each `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` entry against the
+**running `dsh` version** with `semver.satisfies(runtime, range, { includePrerelease: true })`.
+A range whose branches cannot admit `0.2.1-alpha.1` — e.g. the `0.1.1` release's
+`… || >=0.1.1-rc.1 <0.2.0-0` — fails that check, and the plugin manager refuses the install with
+`is incompatible with dsh 0.2.1-alpha.1` (unless a manual `dsh plugin allow-version` exact-version
+exemption is granted). The marketplace applies the same prerelease-aware reading of `engines.dsh`
+and the host peers.
+
+The ranges shipped now (see `peerDependencies` in `package.json`) add an explicit `0.2.x` branch:
 
 ```
-"@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
-"@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
-"@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
+"@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
+"@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0"
 ```
 
-`cordis` is **not** a peer dependency: it is injected by `dsh` at runtime, so declaring it would break install for anyone on a registry that lacks a matching published `cordis`. All three `@deepseek-ai/dsh-*` peers are marked `optional` in `peerDependenciesMeta`, so the plugin still loads where they are absent (it then behaves as a passthrough).
+The prerelease-branch rule still applies: a broad `>=0.0.1-rc.1 <0.3.0` would *silently* exclude
+every `0.1.0-*` / `0.1.1-*` / `0.2.0-*` prerelease under node-semver's default rules (a prerelease
+only satisfies a range when some comparator shares its exact `major.minor.patch` tuple *and* also
+carries a prerelease tag). Because `dsh`'s gate — and the marketplace — evaluate ranges with
+`includePrerelease: true`, those explicit `<0.x.0-0` upper bounds are exactly what admit a running
+prerelease such as `0.2.1-alpha.1`.
 
-The plugin's `dsh.plugin.json` declares:
+`package.json` also declares the host requirement where discovery tools read it:
 
 ```json
-"engines": { "dsh": ">=0.1.0-rc.6 <0.2.0 || >=0.1.1-rc.1 <0.2.0-0" }
+"engines": { "node": ">=20.0.0", "dsh": ">=0.1.0-rc.6 <0.2.0 || >=0.2.0-0 <0.3.0-0" }
 ```
 
-i.e. it is verified against `dsh` `0.1.1-rc.2`, accepts any `0.1.x` prerelease/build, and deliberately **excludes** `0.2.0+` (a future major that may change the `LocalBashExecutor.resolve()` / `ShellExecSpec` API — a sub-package bump will be required before this plugin can track it).
+(`dsh.plugin.json` mirrors the same range for older readers; `dsh` itself reads `package.json`.)
 
-> **Known version skew:** `dsh` (the aggregate, what `npx @deepseek-ai/dsh` installs) and its `@deepseek-ai/dsh-*` sub-packages are on **separate semver tracks** — the aggregate can be `0.1.1-rc.2` while the published sub-packages are still `0.0.1-rc.1`. The ranges above pin to the *published* sub-package versions so a plain `dsh plugin add` resolves cleanly. Watch the [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases) for a matching update.
+All three `@deepseek-ai/dsh-*` peers stay `optional` in `peerDependenciesMeta`, so the plugin still
+installs where they are absent (it then behaves as a passthrough). `@deepseek-ai/cordis` is **not** a
+peer dependency — `dsh` injects it at runtime; it is only a dev dependency for typechecking.
+
+**What the 0.2 port changed.** The execution seam is unchanged — the plugin still only overrides
+`resolve()`, and the 0.2 `ShellExecSpec` merely gains a `sandboxPolicy` field that is spread through
+untouched. The compile-time fixes are the module specifier (`cordis` → `@deepseek-ai/cordis`; the
+unscoped alias no longer exists) and the executor surface the tests use (`run()`/`start()` were
+replaced by `execute()` plus `result()`; `SandboxProvider.confine()` is now async and returns
+`Promise<ConfinedArgv>`; `SandboxPolicyService` now requires `ctx.sessionProjections`).
+
+> **Known version skew:** `dsh` (the aggregate, what `npx @deepseek-ai/dsh` installs) and its
+> `@deepseek-ai/dsh-*` sub-packages are on **separate semver tracks** — the aggregate can be
+> `0.1.1-rc.2` while the published sub-packages are still `0.0.1-rc.1`. The ranges above pin to the
+> *published* sub-package versions but are checked by `dsh` against its **own** version, so every
+> supported release line needs its own explicit branch. Watch the
+> [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases) for a matching update.
 
 ## Install & enable
 
@@ -143,21 +173,21 @@ Complex commands — pipelines, `&&`/`;`, redirects, `$( )`, env assignments —
 ## Development
 
 ```sh
-# 1. clone the plugin and its sibling harness
+# 1. clone the plugin
 git clone https://github.com/DeepTrial/dsh-bash-rtk.git
-git clone https://github.com/deepseek-ai/deepseek-harness.git
 
-# 2. install harness deps and build the libraries the plugin links against
-cd deepseek-harness && pnpm install && pnpm build:lib:host
+# 2. install the released harness packages the plugin builds against
+cd dsh-bash-rtk && pnpm install --ignore-scripts
 
-# 3. install plugin deps and run checks
-cd ../dsh-bash-rtk && pnpm install --ignore-scripts
+# 3. run checks
 pnpm run check        # typecheck + test + build
 pnpm run test         # tests only
 pnpm run typecheck    # tsc only
 ```
 
-`devDependencies` use `link:` into the local `deepseek-harness` checkout; tests run inside that workspace (the `@deepseek-ai/dsh-*` packages must resolve).
+`devDependencies` pin the published `@deepseek-ai/dsh-*` / `@deepseek-ai/cordis` releases the plugin
+builds and tests against (currently the `0.2.1-alpha.1` line); no sibling `deepseek-harness` checkout
+is required.
 
 ## License
 
