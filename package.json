@@ -18,11 +18,17 @@
       "types": "./lib/command.d.ts",
       "default": "./lib/command.js"
     },
+    "./stats": {
+      "types": "./lib/stats.d.ts",
+      "default": "./lib/stats.js"
+    },
+    "./client": "./client/index.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
+    "client",
     "cordis.patch.yml",
     "dsh.plugin.json"
   ],
@@ -35,6 +41,10 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
     }
   },
   "peerDependencies": {

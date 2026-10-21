@@ -130,9 +130,11 @@ dsh web   # 重启以生效
 
 内置的 overlay 片段位于 [`cordis.patch.yml`](cordis.patch.yml)。它会用 `RtkSandboxBashExecutor`（保留文件隔离）替换原生的沙箱执行器，并保留非隔离的 `RtkBashExecutor` 供 `danger-full-access` 场景使用。
 
-### 查看收益：`/rtk` 命令
+### 查看收益：`/rtk` 命令与输入框统计徽章
 
 bundle 还会插入一个默认启用的 `bash-rtk-command` 行。在聊天中输入 `/rtk` 会打印当前会话工作区的 rtk 用量账本（`rtk gain` 的原始输出），带参数会被拒绝。账本来源优先级：环境变量 `RTK_DB_PATH` → `<会话工作区>/.rtk/history.db`（存在时）→ rtk 默认的 HOME 账本。
+
+另有一个仅在 web profile 启用的 `bash-rtk-stats` 行，注册只读接口 `GET /rtk/stats`：`?sessionId=<id>` 返回 `rtk gain --format json` 的 `summary`（10 秒缓存），追加 `&detail=1` 返回文本报告。该路由不经过 `/api` 的浏览器信任栅栏，因此只应在回环地址上提供服务（DSH web 默认绑定 `127.0.0.1`），且只返回 token 统计。包里的浏览器半侧（`client/index.js`，`dsh.client` 声明）会在输入框下方的统计行（`conversation.composer.dock`）加一颗 `rtk −NN%` 徽章，点击弹出账本明细；没有账本数据时徽章隐藏。这是手写的 loader-factory bundle、没有构建步骤；改动后需要重启 `dsh web` 并刷新页面。
 
 ## API / 配置
 

@@ -154,9 +154,11 @@ dsh web   # restart to apply
 
 The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml). It swaps the stock sandbox executor for `RtkSandboxBashExecutor` (file confinement preserved) and leaves the unconfined `RtkBashExecutor` available for `danger-full-access` setups.
 
-### Inspect savings: the `/rtk` command
+### Inspect savings: the `/rtk` command and the composer badge
 
 The bundle also inserts a `bash-rtk-command` row, enabled by default. Typing `/rtk` in chat prints the current session workspace's rtk usage ledger (the raw `rtk gain` report); arguments are rejected. Ledger source order: `RTK_DB_PATH` from the environment → `<session workspace>/.rtk/history.db` when it exists → rtk's default HOME ledger.
+
+A web-only `bash-rtk-stats` row registers the read-only `GET /rtk/stats` endpoint: `?sessionId=<id>` returns the `rtk gain --format json` summary (10 s cache), and `&detail=1` returns the text report. That route bypasses the `/api` browser-trust fence, so it belongs on a loopback bind only (the DSH web default is `127.0.0.1`) and returns token counts only. The package's browser half (`client/index.js`, declared through `dsh.client`) adds an `rtk −NN%` pill to the composer statistics row (`conversation.composer.dock`); clicking it opens the ledger detail, and the pill hides when there is no data. That bundle is a hand-written loader factory with no build step, so restarting `dsh web` and reloading the page is required after changing it.
 
 ## API / Configuration
 

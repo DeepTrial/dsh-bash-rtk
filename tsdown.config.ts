@@ -9,7 +9,7 @@ import type { UserConfig } from 'tsdown'
 
 export default [
   {
-    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts', command: 'src/command.ts' },
+    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts', command: 'src/command.ts', stats: 'src/stats.ts' },
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',
