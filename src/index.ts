@@ -10,6 +10,7 @@
  */
 
 import { spawnSync } from 'node:child_process'
+import { isAbsolute, join, resolve } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
 import type { Config as LocalConfig } from '@deepseek-ai/dsh-bash-local'
@@ -20,10 +21,14 @@ import { wrapWithRtk } from './wrap.ts'
 
 export { wrapWithRtk } from './wrap.ts'
 
-/** Extend the upstream config so cordis plugin() accepts rtkAvailable. */
+/** Extend the upstream config so cordis plugin() accepts the rtk options. */
 declare module '@deepseek-ai/dsh-bash-local' {
   interface Config {
     rtkAvailable?: boolean
+    /** Record rtk usage (default true). False leaves `RTK_DB_PATH` alone. */
+    rtkTracking?: boolean
+    /** Ledger file; a relative path resolves against the session workspace. */
+    rtkDbPath?: string
   }
 }
 
@@ -38,6 +43,44 @@ function resolveRtk(): boolean {
   }
 }
 
+/** Resolved ledger options. */
+interface HistoryConfig {
+  tracking: boolean
+  dbPath?: string
+}
+
+/** Read and validate the two history options once, at plugin construction. */
+function historyConfig(config: LocalConfig): HistoryConfig {
+  const dbPath = config.rtkDbPath
+  if (dbPath === undefined) return { tracking: config.rtkTracking ?? true }
+  const trimmed = typeof dbPath === 'string' ? dbPath.trim() : ''
+  if (trimmed === '') throw new Error('dsh-bash-rtk: rtkDbPath must be a non-empty string')
+  return { tracking: config.rtkTracking ?? true, dbPath: trimmed }
+}
+
+/**
+ * The `RTK_DB_PATH` one execution should carry, or undefined to leave rtk's
+ * default alone. A `workspace-write` command can only write the session
+ * workspace while rtk's default ledger lives in HOME, so the confined case
+ * keeps it inside the workspace; unconfined modes can write HOME as before.
+ */
+function historyDbPath(spec: ShellExecSpec, history: HistoryConfig): string | undefined {
+  if (!history.tracking) return undefined
+  const root = spec.sandboxPolicy?.workspaceRoot ?? spec.workdir
+  if (history.dbPath !== undefined) {
+    return isAbsolute(history.dbPath) ? history.dbPath : resolve(root, history.dbPath)
+  }
+  if (process.env.RTK_DB_PATH !== undefined) return undefined
+  if (spec.sandboxPolicy?.mode !== 'workspace-write') return undefined
+  return join(root, '.rtk', 'history.db')
+}
+
+/** Attach the ledger path to a spec's environment without touching its command. */
+function withHistory(spec: ShellExecSpec, history: HistoryConfig): ShellExecSpec {
+  const dbPath = historyDbPath(spec, history)
+  return dbPath === undefined ? spec : { ...spec, env: { ...spec.env, RTK_DB_PATH: dbPath } }
+}
+
 /**
  * rtk-wrapping LOCAL bash executor (no file sandbox). Registers as `ctx.shell`
  * in place of `dsh-bash-local`; use where confinement is not required (e.g.
@@ -45,15 +88,17 @@ function resolveRtk(): boolean {
  */
 export class RtkBashExecutor extends LocalBashExecutor {
   private readonly rtkAvailable: boolean
+  private readonly history: HistoryConfig
 
   constructor(ctx: Context, config: LocalConfig) {
     super(ctx, config)
     this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
+    this.history = historyConfig(config)
   }
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
     const spec = super.resolve(request)
-    return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable) }
+    return withHistory({ ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable) }, this.history)
   }
 }
 
@@ -67,15 +112,17 @@ export class RtkSandboxBashExecutor extends SandboxBashExecutor {
   static override inject = ['subprocess', 'sandbox', 'sandboxPolicy']
 
   private readonly rtkAvailable: boolean
+  private readonly history: HistoryConfig
 
   constructor(ctx: Context, config: SandboxConfig) {
     super(ctx, config)
     this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
+    this.history = historyConfig(config)
   }
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
     const spec = super.resolve(request)
-    return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable) }
+    return withHistory({ ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable) }, this.history)
   }
 }
 

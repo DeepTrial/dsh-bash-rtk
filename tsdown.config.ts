@@ -1,14 +1,15 @@
 /**
- * tsdown preset for dsh-bash-rtk: a single ESM node half with declarations.
- * The plugin is host-side only (no browser bundle) — it wraps the shell
- * executor seam, which lives on the host. Harness platform modules stay
- * external via peerDependencies.
+ * tsdown preset for dsh-bash-rtk: ESM node halves with declarations — the
+ * executor (`index`), the pure wrap logic (`wrap`) and the `/rtk` command
+ * (`command`). The plugin is host-side only (no browser bundle): it wraps the
+ * shell executor seam and registers a command, both of which live on the host.
+ * Harness platform modules stay external via peerDependencies.
  */
 import type { UserConfig } from 'tsdown'
 
 export default [
   {
-    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts' },
+    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts', command: 'src/command.ts' },
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',

@@ -14,6 +14,10 @@
       "types": "./lib/wrap.d.ts",
       "default": "./lib/wrap.js"
     },
+    "./command": {
+      "types": "./lib/command.d.ts",
+      "default": "./lib/command.js"
+    },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },

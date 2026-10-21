@@ -22,3 +22,7 @@
       disabled: true
       config:
         timeoutMs: 60000
+
+    # `/rtk`: print the workspace's rtk savings ledger in chat.
+    - id: bash-rtk-command
+      name: '@deeptrial/dsh-bash-rtk/command'
