@@ -130,15 +130,36 @@ dsh web   # 重启以生效
 
 内置的 overlay 片段位于 [`cordis.patch.yml`](cordis.patch.yml)。它会用 `RtkSandboxBashExecutor`（保留文件隔离）替换原生的沙箱执行器，并保留非隔离的 `RtkBashExecutor` 供 `danger-full-access` 场景使用。
 
+### 查看收益：`/rtk` 命令与输入框统计徽章
+
+bundle 还会插入一个默认启用的 `bash-rtk-command` 行。在聊天中输入 `/rtk` 会打印当前会话工作区的 rtk 用量账本（`rtk gain` 的原始输出），带参数会被拒绝。账本来源优先级：环境变量 `RTK_DB_PATH` → `<会话工作区>/.rtk/history.db`（存在时）→ rtk 默认的 HOME 账本。
+
+另有一个仅在 web profile 启用的 `bash-rtk-stats` 行，注册只读接口 `GET /rtk/stats`：`?sessionId=<id>` 返回 `rtk gain --format json` 的 `summary`（10 秒缓存），追加 `&detail=1` 返回文本报告。该路由不经过 `/api` 的浏览器信任栅栏，因此只应在回环地址上提供服务（DSH web 默认绑定 `127.0.0.1`），且只返回 token 统计。包里的浏览器半侧（`client/index.js`，`dsh.client` 声明）会在输入框下方的统计行（`conversation.composer.dock`）加一颗 `rtk −NN%` 徽章，点击弹出账本明细；没有账本数据时徽章隐藏。这是手写的 loader-factory bundle、没有构建步骤；改动后需要重启 `dsh web` 并刷新页面。
+
 ## API / 配置
 
-两个执行器均接受与其原生对应物（`LocalBashExecutor` / `SandboxBashExecutor`）相同的基础配置，外加一个可选字段：
+两个执行器均接受与其原生对应物（`LocalBashExecutor` / `SandboxBashExecutor`）相同的基础配置，外加以下可选字段：
 
 | 选项 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
 | `rtkAvailable` | `boolean` | `resolveRtk()` 结果 | 强制启用或禁用 rtk 包装。适用于测试或二进制路径非标准的部署环境。 |
+| `rtkTracking` | `boolean` | `true` | 是否把 rtk 的用量账本落到会话工作区（注入 `RTK_DB_PATH`）。`false` = 不注入。 |
+| `rtkDbPath` | `string` | `<会话工作区>/.rtk/history.db` | 账本文件位置；相对路径按会话工作区解析，也可给绝对路径。显式设置时在 `danger-full-access` 下同样生效。 |
 
 其余选项 —— `cwd`、`timeoutMs`、`graceMs` 等 —— 均原样继承自上游执行器。
+
+**沙箱会话语义。** rtk 默认把用量记在 `~/.local/share/rtk/history.db`，而 `workspace-write` 沙箱只允许写会话工作区，因此插件默认把账本改写到 `<会话工作区>/.rtk/history.db`——这样 `rtk gain` 才有数据。`read-only`（写不了）与 `danger-full-access`（本就能写 HOME）不注入；外部已设置 `RTK_DB_PATH` 时插件不覆盖。示例：
+
+```yaml
+- id: bash-rtk
+  disabled: false
+  config:
+    timeoutMs: 60000
+    rtkTracking: true
+    # rtkDbPath: .rtk/history.db   # 默认值；相对路径按会话工作区解析
+```
+
+账本按会话工作区分开，跨工作区不汇总；建议把 `.rtk/` 加进各项目的 `.gitignore`。
 
 ## 哪些命令会被路由
 

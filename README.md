@@ -154,15 +154,36 @@ dsh web   # restart to apply
 
 The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml). It swaps the stock sandbox executor for `RtkSandboxBashExecutor` (file confinement preserved) and leaves the unconfined `RtkBashExecutor` available for `danger-full-access` setups.
 
+### Inspect savings: the `/rtk` command and the composer badge
+
+The bundle also inserts a `bash-rtk-command` row, enabled by default. Typing `/rtk` in chat prints the current session workspace's rtk usage ledger (the raw `rtk gain` report); arguments are rejected. Ledger source order: `RTK_DB_PATH` from the environment → `<session workspace>/.rtk/history.db` when it exists → rtk's default HOME ledger.
+
+A web-only `bash-rtk-stats` row registers the read-only `GET /rtk/stats` endpoint: `?sessionId=<id>` returns the `rtk gain --format json` summary (10 s cache), and `&detail=1` returns the text report. That route bypasses the `/api` browser-trust fence, so it belongs on a loopback bind only (the DSH web default is `127.0.0.1`) and returns token counts only. The package's browser half (`client/index.js`, declared through `dsh.client`) adds an `rtk −NN%` pill to the composer statistics row (`conversation.composer.dock`); clicking it opens the ledger detail, and the pill hides when there is no data. That bundle is a hand-written loader factory with no build step, so restarting `dsh web` and reloading the page is required after changing it.
+
 ## API / Configuration
 
-Both executors accept the same base config as their stock counterparts (`LocalBashExecutor` / `SandboxBashExecutor`) plus one optional field:
+Both executors accept the same base config as their stock counterparts (`LocalBashExecutor` / `SandboxBashExecutor`) plus these optional fields:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `rtkAvailable` | `boolean` | `resolveRtk()` result | Force-enable or force-disable rtk wrapping. Useful for tests or deployments where the binary path is non-standard. |
+| `rtkTracking` | `boolean` | `true` | Write rtk's usage ledger inside the session workspace (injects `RTK_DB_PATH`). `false` leaves the environment alone. |
+| `rtkDbPath` | `string` | `<session workspace>/.rtk/history.db` | Ledger file; a relative path resolves against the session workspace, an absolute one is used as-is. When set explicitly it also applies under `danger-full-access`. |
 
 All other options — `cwd`, `timeoutMs`, `graceMs`, etc. — are inherited unchanged from the upstream executors.
+
+**Sandbox sessions.** rtk records usage in `~/.local/share/rtk/history.db`, but a `workspace-write` sandbox may only write the session workspace, so the plugin redirects the ledger to `<session workspace>/.rtk/history.db` by default — otherwise `rtk gain` stays empty. `read-only` (cannot write) and `danger-full-access` (HOME is writable already) are left alone, and an operator-provided `RTK_DB_PATH` is never overridden. Example:
+
+```yaml
+- id: bash-rtk
+  disabled: false
+  config:
+    timeoutMs: 60000
+    rtkTracking: true
+    # rtkDbPath: .rtk/history.db   # the default; relative to the session workspace
+```
+
+The ledger is per workspace; add `.rtk/` to each project's `.gitignore`.
 
 ## Which commands are routed
 

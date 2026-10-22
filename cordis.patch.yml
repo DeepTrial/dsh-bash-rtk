@@ -22,3 +22,12 @@
       disabled: true
       config:
         timeoutMs: 60000
+
+    # `/rtk`: print the workspace's rtk savings ledger in chat.
+    - id: bash-rtk-command
+      name: '@deeptrial/dsh-bash-rtk/command'
+
+    # `GET /rtk/stats`: backs the composer-dock savings pill (web profile only).
+    - id: bash-rtk-stats
+      name: '@deeptrial/dsh-bash-rtk/stats'
+      disabled: !!js "ctx.get('profileContext')?.name !== 'web'"
